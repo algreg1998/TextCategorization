@@ -22,8 +22,10 @@ import com.datumbox.opensource.dataobjects.NaiveBayesKnowledgeBase;
 import com.datumbox.opensource.features.FeatureExtraction;
 import com.datumbox.opensource.features.TextTokenizer;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -135,6 +137,12 @@ public class NaiveBayes {
         
         //we pass this information to the feature selection algorithm and we get a list with the selected features
         Map<String, Double> selectedFeatures = featureExtractor.chisquare(stats, chisquareCriticalValue);
+        Map<String, Double> featuresList = null;
+        
+        for(Map.Entry<String, Double> entry : sortHashMapByValues(selectedFeatures).entrySet()) {
+            System.out.println(entry.getKey()+" "+entry.getValue());
+        }
+
         
         //clip from the stats all the features that are not selected
         Iterator<Map.Entry<String, Map<String, Integer>>> it = stats.featureCategoryJointCount.entrySet().iterator();
@@ -149,7 +157,35 @@ public class NaiveBayes {
         
         return stats;
     }
-    
+    public Map<String, Double> sortHashMapByValues(
+        Map<String, Double> passedMap) {
+        List<String> mapKeys = new ArrayList<>(passedMap.keySet());
+        List<Double> mapValues = new ArrayList<>(passedMap.values());
+        Collections.sort(mapValues);
+        Collections.sort(mapKeys);
+
+        Map<String, Double> sortedMap =
+            new LinkedHashMap<>();
+
+        Iterator<Double> valueIt = mapValues.iterator();
+        while (valueIt.hasNext()) {
+            Double val = valueIt.next();
+            Iterator<String> keyIt = mapKeys.iterator();
+
+            while (keyIt.hasNext()) {
+                String key = keyIt.next();
+                Double comp1 = passedMap.get(key);
+                Double comp2 = val;
+
+                if (comp1.equals(comp2)) {
+                    keyIt.remove();
+                    sortedMap.put(key, val);
+                    break;
+                }
+            }
+        }
+        return sortedMap;
+    }
     /**
      * Trains a Naive Bayes classifier by using the Multinomial Model by passing
      * the trainingDataset and the prior probabilities.
